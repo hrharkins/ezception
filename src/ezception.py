@@ -41,7 +41,50 @@ class EZMessage(object):
         else:
             return lambda **_k: self(target, **_k)
             
-class EZCeption(Exception):
+class EZMessageContainer(object):
+    def __getattr__(self, name):
+        if name[:5] == 'ezmsg':
+            raise AttributeError(name)
+        else:
+            return getattr(self, 'ezmsg_' + name)()
+    
+    def __init_subclass__(cls):
+        for name, obj in cls.__dict__.items():
+            if name[:5] == 'ezmsg' and isinstance(obj, str):
+                setattr(cls, name, EZMessage(obj))
+
+    def __str__(self):
+        msg = self.ezmsg
+        return '' if msg is None else msg()
+    
+    def __repr__(self):
+        return repr(str(self))
+        
+    @classmethod
+    def FLEXIBLE(cls):
+        def __init__(self, **_kw):
+            self.__dict__.update(_kw)
+        
+        clsdict = {
+            '__init__': __init__,
+        }
+        
+        return type(cls.__name__, (cls,), clsdict)
+        
+class EZDocMessageContainer(EZMessageContainer):
+    def __init_subclass__(cls):
+        if 'ezmsg' not in cls.__dict__:
+            doclines = (cls.__doc__ or '').split('\n')
+            while doclines and not doclines[0]:
+                del doclines[0]
+            ezmsg = []
+            while doclines and doclines[0]:
+                ezmsg.append(doclines[0].strip())
+                del doclines[0]
+            cls.ezmsg = ' '.join(ezmsg)
+        super().__init_subclass__()
+        
+class EZCeption(EZDocMessageContainer.FLEXIBLE(), Exception):
     '''
     Simplified API for defining and formatting exceptions.
     
@@ -66,35 +109,3 @@ class EZCeption(Exception):
 
     '''
     
-    __ezunnamed__ = False
-
-    def __init__(self, **_kw):
-        self.__dict__.update(_kw)
-        
-    def __getattr__(self, name):
-        if name[:5] == 'ezmsg':
-            raise AttributeError(name)
-        else:
-            return getattr(self, 'ezmsg_' + name)()
-    
-    def __str__(self):
-        msg = self.ezmsg
-        return '' if msg is None else msg()
-    
-    def __repr__(self):
-        return repr(str(self))
-
-    def __init_subclass__(cls):
-        if 'ezmsg' not in cls.__dict__:
-            doclines = cls.__doc__.split('\n')
-            while doclines and not doclines[0]:
-                del doclines[0]
-            ezmsg = []
-            while doclines and doclines[0]:
-                ezmsg.append(doclines[0].strip())
-                del doclines[0]
-            cls.ezmsg = '\n'.join(ezmsg)
-        for name, obj in cls.__dict__.items():
-            if name[:5] == 'ezmsg' and isinstance(obj, str):
-                setattr(cls, name, EZMessage(obj))
-
