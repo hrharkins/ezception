@@ -32,13 +32,22 @@ import ezception
 
 class MyWebRequester(object):
 
-    # Fundamental error type
-    Error = ezception.EZCeption[:]
+    class Error(ezception.EZCeption):
+        'A general error has occurred.'
+        
+    class OpenError(Error):
+        'An error opening {self.url!r} has occurred.'
     
-    # Open errors
-    OpenError = Error[:]
-    NoURLError = OpenError['No URL was provided']
-    BadSchemeError = OpenError['The scheme {self.scheme!r} is bad.']
+    class NoURLError(OpenError):
+        '''
+        No URL was provided.
+        ''''
+        
+    class NoURLError(OpenError):
+        '''
+        The scheme {self.scheme!r} is not acceptable.
+        '''
+
     ...
     
     def open(self, url):
@@ -46,7 +55,7 @@ class MyWebRequester(object):
         
         ... Oh noes!
         raise self.BadSchemeError(scheme=url.scheme)
-
+        
 ```
 
 So in the example the class defines a simple hierarchy of errors.  Progreammers 
@@ -65,3 +74,4 @@ the message to be presented is processed using the gettext module, so adding
 support for other languages for such messages is possible using regular .po
 files.  All messages are tracked by a global ezception.ALL_MSGS dict so
 generating base .po files is also simplified.
+
