@@ -1,3 +1,6 @@
 __pycache__
 *.py?
 .c9*
+build/
+dist/
+*egg-info*

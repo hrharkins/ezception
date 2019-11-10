@@ -17,11 +17,11 @@ class EZMessage(object):
     ALL_MSGS = set()
     _ = staticmethod(gettext.gettext)
     
-    def __init__(self, _msg, _=..., **_kw):
+    def __init__(self, _msg, _=Ellipsis, **_kw):
         self.ALL_MSGS.add(_msg)
         self._msg = _msg
         self._kw = _kw
-        if _ is not ...:
+        if _ is not Ellipsis:
             self._ = _
 
     def __call__(self, _src, _=None, **_kw):
@@ -60,17 +60,10 @@ class EZMessageContainer(object):
     def __repr__(self):
         return repr(str(self))
         
-    @classmethod
-    def FLEXIBLE(cls):
-        def __init__(self, **_kw):
-            self.__dict__.update(_kw)
-        
-        clsdict = {
-            '__init__': __init__,
-        }
-        
-        return type(cls.__name__, (cls,), clsdict)
-        
+class EZFlexibleMessageContainer(EZMessageContainer):
+    def __init__(self, **_kw):
+        self.__dict__.update(_kw)
+    
 class EZDocMessageContainer(EZMessageContainer):
     def __init_subclass__(cls):
         if 'ezmsg' not in cls.__dict__:
@@ -84,7 +77,7 @@ class EZDocMessageContainer(EZMessageContainer):
             cls.ezmsg = ' '.join(ezmsg)
         super().__init_subclass__()
         
-class EZCeption(EZDocMessageContainer.FLEXIBLE(), Exception):
+class EZCeption(EZDocMessageContainer, EZFlexibleMessageContainer, Exception):
     '''
     Simplified API for defining and formatting exceptions.
     
